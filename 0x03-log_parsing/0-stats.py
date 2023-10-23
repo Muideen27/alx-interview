@@ -1,42 +1,36 @@
 #!/usr/bin/python3
 ''' module for log parsing '''
 
-import sys
 
-# Initialize metrics
-total_file_size = 0
-status_code_counts = {}
+import sys
+total = 0
+counter = 0
+sc_dict = {'200': 0, '301': 0, '400': 0, '401': 0,
+           '403': 0, '404': 0, '405': 0, '500': 0}
+
+
+def print_data(total):
+    ''' function to print statistics for input '''
+    print('File size: {}'.format(total))
+    for key, value in sorted(sc_dict.items()):
+        if value != 0:
+            print('{}: {}'.format(key, value))
+
 
 try:
-    line_count = 0
     for line in sys.stdin:
-        line_count += 1
-        
-        # Split the line into components
-        parts = line.strip().split()
-        if len(parts) != 7:
-            continue  # Skip lines with incorrect format
-        
-        ip_address, _, _, _, status_code, file_size = parts
-        
-        # Check if status code is a valid integer
-        if not status_code.isdigit():
-            continue
-        
-        # Update metrics
-        total_file_size += int(file_size)
-        status_code_counts[int(status_code)] = status_code_counts.get(int(status_code), 0) + 1
-        
-        # Print statistics every 10 lines
-        if line_count % 10 == 0:
-            print("Total file size:", total_file_size)
-            for code in sorted(status_code_counts.keys()):
-                print(f"{code}: {status_code_counts[code]}")
-            print()
-            
-except KeyboardInterrupt:
-    print("\nKeyboard interruption detected. Printing statistics:")
-    print("Total file size:", total_file_size)
-    for code in sorted(status_code_counts.keys()):
-        print(f"{code}: {status_code_counts[code]}")
-
+        rline = line.split(" ")
+        if len(rline) > 4:
+            code = rline[-2]
+            if code in sc_dict.keys():
+                sc_dict[code] += 1
+            filesize = int(rline[-1])
+            total += filesize
+            counter += 1
+        if counter == 10:
+            counter = 0
+            print_data(total)
+except Exception as ex:
+    pass
+finally:
+    print_data(total)
